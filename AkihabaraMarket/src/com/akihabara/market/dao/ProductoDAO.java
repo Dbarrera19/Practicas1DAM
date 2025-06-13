@@ -1,42 +1,34 @@
 package com.akihabara.market.dao;
 
 import com.akihabara.market.model.ProductoOtaku;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductoDAO {
-    public void agregarProducto(ProductoOtaku producto) {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
+    private DatabaseConnection db = new DatabaseConnection();
 
+    public void agregarProducto(ProductoOtaku p) {
         String sql = "INSERT INTO producto (nombre, categoria, precio, stock) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, producto.getNombre());
-            stmt.setString(2, producto.getCategoria());
-            stmt.setDouble(3, producto.getPrecio());
-            stmt.setInt(4, producto.getStock());
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql)) {
+            stmt.setString(1, p.getNombre());
+            stmt.setString(2, p.getCategoria());
+            stmt.setDouble(3, p.getPrecio());
+            stmt.setInt(4, p.getStock());
             stmt.executeUpdate();
-            System.out.println("Producto agregado con éxito.");
         } catch (SQLException e) {
-            System.out.println("Error al agregar el producto: " + e.getMessage());
-        } finally {
-            db.cerrarConexion();
+            System.out.println("Error al agregar producto: " + e.getMessage());
         }
     }
 
     public ProductoOtaku obtenerProductoPorId(int id) {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
-
-        ProductoOtaku producto = null;
         String sql = "SELECT * FROM producto WHERE id = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql)) {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                producto = new ProductoOtaku(
+                return new ProductoOtaku(
                     rs.getInt("id"),
                     rs.getString("nombre"),
                     rs.getString("categoria"),
@@ -45,25 +37,18 @@ public class ProductoDAO {
                 );
             }
         } catch (SQLException e) {
-            System.out.println("Error al obtener el producto: " + e.getMessage());
-        } finally {
-            db.cerrarConexion();
+            System.out.println("Error al obtener producto por ID: " + e.getMessage());
         }
-
-        return producto;
+        return null;
     }
 
     public List<ProductoOtaku> obtenerTodosLosProductos() {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
-
-        List<ProductoOtaku> productos = new ArrayList<>();
+        List<ProductoOtaku> lista = new ArrayList<>();
         String sql = "SELECT * FROM producto";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql);
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                productos.add(new ProductoOtaku(
+                lista.add(new ProductoOtaku(
                     rs.getInt("id"),
                     rs.getString("nombre"),
                     rs.getString("categoria"),
@@ -73,64 +58,44 @@ public class ProductoDAO {
             }
         } catch (SQLException e) {
             System.out.println("Error al obtener todos los productos: " + e.getMessage());
-        } finally {
-            db.cerrarConexion();
         }
-
-        return productos;
+        return lista;
     }
 
-    public boolean actualizarProducto(ProductoOtaku producto) {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
-
-        String sql = "UPDATE producto SET nombre = ?, categoria = ?, precio = ?, stock = ? WHERE id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, producto.getNombre());
-            stmt.setString(2, producto.getCategoria());
-            stmt.setDouble(3, producto.getPrecio());
-            stmt.setInt(4, producto.getStock());
-            stmt.setInt(5, producto.getId());
-
-            int filas = stmt.executeUpdate();
-            return filas > 0;
+    public boolean actualizarProducto(ProductoOtaku p) {
+        String sql = "UPDATE producto SET nombre=?, categoria=?, precio=?, stock=? WHERE id=?";
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql)) {
+            stmt.setString(1, p.getNombre());
+            stmt.setString(2, p.getCategoria());
+            stmt.setDouble(3, p.getPrecio());
+            stmt.setInt(4, p.getStock());
+            stmt.setInt(5, p.getId());
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Error al actualizar el producto: " + e.getMessage());
+            System.out.println("Error al actualizar producto: " + e.getMessage());
             return false;
-        } finally {
-            db.cerrarConexion();
         }
     }
 
     public boolean eliminarProducto(int id) {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
-
-        String sql = "DELETE FROM producto WHERE id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String sql = "DELETE FROM producto WHERE id=?";
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql)) {
             stmt.setInt(1, id);
-            int filas = stmt.executeUpdate();
-            return filas > 0;
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Error al eliminar el producto: " + e.getMessage());
+            System.out.println("Error al eliminar producto: " + e.getMessage());
             return false;
-        } finally {
-            db.cerrarConexion();
         }
     }
 
     public List<ProductoOtaku> buscarProductosPorNombre(String nombre) {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
-
-        List<ProductoOtaku> productos = new ArrayList<>();
+        List<ProductoOtaku> lista = new ArrayList<>();
         String sql = "SELECT * FROM producto WHERE nombre LIKE ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql)) {
             stmt.setString(1, "%" + nombre + "%");
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                productos.add(new ProductoOtaku(
+                lista.add(new ProductoOtaku(
                     rs.getInt("id"),
                     rs.getString("nombre"),
                     rs.getString("categoria"),
@@ -139,26 +104,19 @@ public class ProductoDAO {
                 ));
             }
         } catch (SQLException e) {
-            System.out.println("Error al buscar productos por nombre: " + e.getMessage());
-        } finally {
-            db.cerrarConexion();
+            System.out.println("Error al buscar por nombre: " + e.getMessage());
         }
-
-        return productos;
+        return lista;
     }
 
     public List<ProductoOtaku> buscarProductoPorCategoria(String categoria) {
-        DatabaseConnection db = new DatabaseConnection();
-        Connection conn = db.getConexion();
-
-        List<ProductoOtaku> productos = new ArrayList<>();
-        String sql = "SELECT * FROM producto WHERE categoria = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        List<ProductoOtaku> lista = new ArrayList<>();
+        String sql = "SELECT * FROM producto WHERE categoria=?";
+        try (PreparedStatement stmt = db.getConexion().prepareStatement(sql)) {
             stmt.setString(1, categoria);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                productos.add(new ProductoOtaku(
+                lista.add(new ProductoOtaku(
                     rs.getInt("id"),
                     rs.getString("nombre"),
                     rs.getString("categoria"),
@@ -167,11 +125,8 @@ public class ProductoDAO {
                 ));
             }
         } catch (SQLException e) {
-            System.out.println("Error al buscar productos por categoría: " + e.getMessage());
-        } finally {
-            db.cerrarConexion();
+            System.out.println("Error al buscar por categoría: " + e.getMessage());
         }
-
-        return productos;
+        return lista;
     }
 }
