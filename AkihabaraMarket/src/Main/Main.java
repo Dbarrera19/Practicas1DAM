@@ -1,12 +1,23 @@
 package Main;
+
 import com.akihabara.market.dao.ProductoDAO;
 import com.akihabara.market.model.ProductoOtaku;
+import com.akihabara.market.services.IAService;
+import com.akihabara.market.util.ConfiguracionSistema;
 import com.akihabara.market.view.InterfazConsola;
 
 public class Main {
     public static void main(String[] args) {
+        System.out.println("=== CONFIGURACIÓN DEL SISTEMA ===");
+        System.out.println("Color de fondo: " + ConfiguracionSistema.get("COLOR_FONDO"));
+        System.out.println("Color de texto: " + ConfiguracionSistema.get("COLOR_TEXTO"));
+        System.out.println("Fuente: " + ConfiguracionSistema.get("FUENTE"));
+        System.out.println("===================================");
+
+
         InterfazConsola vista = new InterfazConsola();
         ProductoDAO dao = new ProductoDAO();
+        IAService ia = new IAService();
         boolean salir = false;
 
         while (!salir) {
@@ -15,7 +26,8 @@ public class Main {
 
             switch (opcion) {
                 case 1:
-                    dao.agregarProducto(vista.pedirDatosProducto());
+                    ProductoOtaku nuevo = vista.pedirDatosProductoConIA(ia);
+                    dao.agregarProducto(nuevo);
                     break;
                 case 2:
                     vista.mostrarProducto(dao.obtenerProductoPorId(vista.pedirIdProducto()));
@@ -44,6 +56,11 @@ public class Main {
                 case 8:
                     salir = true;
                     vista.mostrarMensaje("Gracias por usar AkihabaraMarket.");
+                    break;
+                case 9:
+                    String descripcion = vista.pedirDescripcionParaIA();
+                    String generado = ia.generarTexto("Sugiere un nombre creativo para un producto otaku del tipo: " + descripcion);
+                    vista.mostrarMensaje("Nombre sugerido por la IA: " + generado);
                     break;
                 default:
                     vista.mostrarMensaje("Opción no válida.");
